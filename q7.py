@@ -14,6 +14,14 @@ import numpy as np
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 
+# plot settings: font to match the report
+plt.rc("font", family="serif", size=10)
+plt.rc("mathtext", fontset="cm")
+plt.rc("axes", titlesize=10, grid=True,
+       prop_cycle=plt.cycler(color=["teal", "firebrick", "darkgoldenrod", "indigo"]))
+plt.rc("grid", linestyle=":", color="0.7")
+plt.rc("legend", fontsize=9)
+
 # PARAMETERS
 M, k = 1.0, 1.0
 OMEGA0 = np.sqrt(k / M)  # natural frequency of primary mass
@@ -22,6 +30,7 @@ beta = 0.2
 P = 0.02
 m = 0.1
 ZETA_A = 0.05            # damping ratio of absorber
+
 
 # SIMULATION FUNCTIONS
 
@@ -98,6 +107,7 @@ def linear_amplitude(k_a, c_a, Omega):
 
 # FIGURES
 
+
 # 1. Time series with forcing at primary resonance OMEGA0, for all three cases
 # Plots x(t) for each case in its own panel, and prints the steady-state
 # measures (max |x|, RMS of x, absorber stroke, which is its max |z - x|)
@@ -116,12 +126,11 @@ def time_series_figure():
         win = t >= T_END - N_MEASURE * 2 * np.pi / Omega
         stroke = np.max(np.abs(z[win] - x[win])) if k_a > 0 else float("nan")
         print(f"{name:34s} {amp:9.4f} {rms:9.4f} {stroke:10.4f}")
-        ax.plot(t, x, lw=0.8, color="tab:blue")
+        ax.plot(t, x, lw=0.8)
         ax.set_ylabel("$x(t)$")
-        ax.set_title(f"{name}: steady-state max$|x|$ = {amp:.3f}", fontsize=10)
+        ax.set_title(f"{name}: steady-state max$|x|$ = {amp:.3f}")
         # same y-range in every panel
         ax.set_ylim(-0.7, 0.7)
-        ax.grid(alpha=0.3)
     axes[-1].set_xlabel("time $t$")
     fig.tight_layout()
     fig.savefig("figures/q7_time_series.pdf")
@@ -135,22 +144,21 @@ def frequency_response_figure():
     # Test 81 frequencies, spacing 0.01, so peak locations are accurate to ~0.01
     Omegas = np.linspace(0.6, 1.4, 81)
     fig, ax = plt.subplots(figsize=(7, 4.5))
-    colors = ["tab:gray", "tab:blue", "tab:orange"]
+    colors = ["dimgrey", "teal", "firebrick"]
     for (name, (k_a, c_a)), col in zip(CASES.items(), colors):
         # 81 simulations per case. [:2] to keep (t, x) and drop z
         amp_sim = [steady_measures(*simulate(k_a, c_a, W)[:2], W)[0]
                    for W in Omegas]
         amp_lin = [linear_amplitude(k_a, c_a, W)[0] for W in Omegas]
-        ax.plot(Omegas, amp_sim, "-", color=col, label=f"{name}")
+        ax.plot(Omegas, amp_sim, "-", color=col, label=name)
         ax.plot(Omegas, amp_lin, "--", color=col, lw=0.9)
     # dotted vertical line at the primary natural frequency
     ax.axvline(OMEGA0, color="k", lw=0.6, ls=":")
     ax.set_xlabel(r"forcing frequency $\Omega$")
     ax.set_ylabel(r"steady-state amplitude max$|x|$")
     ax.set_title(r"Solid: simulation with $\beta=%.1f$. Dashed: exact linear"
-                 r" ($\beta = 0$)." % beta, fontsize=10)
-    ax.legend(fontsize=9)
-    ax.grid(alpha=0.3)
+                 r" ($\beta = 0$)." % beta)
+    ax.legend()
     fig.tight_layout()
     fig.savefig("figures/q7_frequency_response.pdf")
     plt.close(fig)
